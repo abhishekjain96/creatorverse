@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
       <head>
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
-      <body>{children}</body>
+    <body suppressHydrationWarning={true}>{children}</body>
     </html>
   );
 }

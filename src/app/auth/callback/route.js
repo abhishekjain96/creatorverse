@@ -1,6 +1,7 @@
-// File: src/app/auth/callback/route.js
-import { NextResponse } from 'next/server'
+// File: src/app/auth/callback/route.js (Final Correct Code)
 import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
@@ -9,7 +10,8 @@ export async function GET(request) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    const supabase = createClient()
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
