@@ -1,127 +1,94 @@
+// File: src/app/dashboard/page.jsx (Amazing UI)
 'use client'
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+const StatCard = ({ title, value, icon, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay: delay }}
+    className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 shadow-lg"
+  >
+    <div className="flex items-center">
+      <div className="p-3 bg-indigo-500/20 rounded-lg mr-4 border border-indigo-500/30">
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-400">{title}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+      </div>
+    </div>
+  </motion.div>
+);
+
+const ChartPlaceholder = () => (
+    <div className="w-full h-64 rounded-lg flex items-center justify-center">
+        <p className="text-gray-500">Sales Chart Coming Soon</p>
+    </div>
+);
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [products, setProducts] = useState([]) // New state for products
-  const router = useRouter()
-  const supabase = createClient()
+  const [profile, setProfile] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Check for logged-in user
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.replace('/login')
-        return
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { window.location.href = '/login'; return; }
       
-      setUser(user)
+      const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      setProfile(profileData);
 
-      // 2. Fetch products for the logged-in user
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('*') // RLS ensures only this user's products are fetched
+      const { data: productData } = await supabase.from('products').select('*');
+      if (productData) setProducts(productData);
 
-      if (productError) {
-        console.error('Error fetching products:', productError)
-      } else {
-        setProducts(productData)
-      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [])
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/login')
-  }
+  const welcomeName = profile?.full_name?.split(' ')[0] || 'Creator';
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>
+    return <div className="flex items-center justify-center h-full text-gray-400">Loading your universe...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        
-        {/* Header and Navigation Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">CreatorVerse</h1>
-            <div className="flex items-center space-x-4">
-              <a href="/dashboard/settings" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-                Settings
-              </a>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-          <p className="text-gray-600 mt-2">
-            Welcome back, <span className="font-bold">{user.email}</span>!
-          </p>
-          {/* Main Navigation */}
-          <nav className="mt-6 border-t pt-4">
-            <ul className="flex space-x-6">
-              <li><a href="/dashboard" className="font-semibold text-indigo-600">Overview</a></li>
-              <li><a href="/dashboard/content" className="font-semibold text-gray-600 hover:text-indigo-600">Content</a></li>
-            </ul>
-          </nav>
-        </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white">Welcome back, {welcomeName}!</h1>
+          <p className="text-gray-400 mt-2">Let's see how your creator empire is doing.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Total Revenue" value="₹0" icon={<svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"></path></svg>} delay={0.1} />
+        <StatCard title="Total Sales" value="0" icon={<svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>} delay={0.2} />
+        <StatCard title="Products" value={products.length} icon={<svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>} delay={0.3} />
+      </div>
 
-        {/* Products Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-700">My Products</h2>
-            <a
-              href="/dashboard/products"
-              className="px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
-            >
-              + Add New Product
-            </a>
-          </div>
-          
-          {/* Product List */}
-          <div className="space-y-4">
-            {products.length > 0 ? (
-              products.map((product) => (
-                <div key={product.id} className="flex justify-between items-center p-4 border rounded-lg bg-white">
-                  <div>
-                    <h3 className="font-bold text-lg">{product.name}</h3>
-                    <p className="text-sm text-gray-500">{product.description || 'No description'}</p>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-lg font-semibold">
-                      ₹{product.price}
-                    </div>
-                    <a 
-                      href={`/products/${product.id}`} 
-                      target="_blank" 
-                      className="text-sm px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                    >
-                      View Page
-                    </a>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-gray-500">You haven't added any products yet.</p>
-            )}
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 shadow-lg">
+          <h2 className="text-xl font-bold text-white mb-4">Sales Analytics</h2>
+          <ChartPlaceholder />
+        </div>
+        
+        <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 shadow-lg">
+            <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+            <div className="space-y-3">
+                <Link href="/dashboard/products" className="block w-full text-center py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition-colors">
+                    Add New Product
+                </Link>
+                <Link href="/dashboard/content" className="block w-full text-center py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 border border-white/20 transition-colors">
+                    Plan Content
+                </Link>
+            </div>
         </div>
       </div>
-    </div>
-  )
+    </motion.div>
+  );
 }

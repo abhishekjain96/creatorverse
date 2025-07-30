@@ -1,4 +1,4 @@
-// File: src/lib/supabase/server.js
+// File: src/lib/supabase/server.js (Final Correct Code)
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -16,12 +16,16 @@ export function createClient() {
         set(name, value, options) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {}
+          } catch (error) {
+            // This can happen in Server Components.
+          }
         },
         remove(name, options) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {}
+          } catch (error) {
+            // This can happen in Server Components.
+          }
         },
       },
     }

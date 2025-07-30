@@ -1,6 +1,7 @@
 // File: src/app/layout.jsx (CORRECT AND FINAL CODE)
 import "./globals.css";
 
+
 export const metadata = {
   title: "CreatorVerse",
   description: "Your Entire Creator Business, in One Place.",
